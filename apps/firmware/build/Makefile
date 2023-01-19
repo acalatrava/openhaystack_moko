@@ -53,6 +53,10 @@ SRC_FILES += \
   $(PROJ_DIR)/ble_stack.c \
   $(PROJ_DIR)/openhaystack.c \
   $(PROJ_DIR)/main.c \
+  $(PROJ_DIR)/dfu/ble_dfu_bonded.c \
+  $(PROJ_DIR)/dfu/ble_dfu_unbonded.c \
+  $(PROJ_DIR)/dfu/ble_dfu.c \
+  $(PROJ_DIR)/dfu/nrf_dfu_svci.c \
   $(SDK_ROOT)/external/segger_rtt/SEGGER_RTT.c \
   $(SDK_ROOT)/external/segger_rtt/SEGGER_RTT_Syscalls_GCC.c \
   $(SDK_ROOT)/external/segger_rtt/SEGGER_RTT_printf.c \
@@ -165,6 +169,9 @@ INC_FOLDERS += \
   $(SDK_ROOT)/components/libraries/usbd \
   $(SDK_ROOT)/components/libraries/stack_guard \
   $(SDK_ROOT)/components/libraries/log/src \
+  $(SDK_ROOT)/components/libraries/bootloader \
+  $(SDK_ROOT)/components/libraries/bootloader/dfu \
+  $(SDK_ROOT)/components/libraries/bootloader/ble_dfu \
 
 # Libraries common to all targets
 LIB_FILES += \
@@ -195,6 +202,9 @@ CFLAGS += -mfloat-abi=soft
 # keep every function in a separate section, this allows linker to discard unused ones
 CFLAGS += -ffunction-sections -fdata-sections -fno-strict-aliasing
 CFLAGS += -fno-builtin -fshort-enums
+# dfu
+CFLAGS += -DNRF_DFU_TRANSPORT_BLE=1
+CFLAGS += -DBL_SETTINGS_ACCESS_ONLY
 
 # C++ flags common to all targets
 CXXFLAGS += $(OPT)
@@ -215,6 +225,9 @@ ASMFLAGS += -DNRFX_COREDEP_DELAY_US_LOOP_CYCLES=3
 ASMFLAGS += -DNRF_SD_BLE_API_VERSION=7
 ASMFLAGS += -DS112
 ASMFLAGS += -DSOFTDEVICE_PRESENT
+#dfu
+ASMFLAGS += -DNRF_DFU_TRANSPORT_BLE=1
+ASMFLAGS += -DBL_SETTINGS_ACCESS_ONLY
 
 # Linker flags
 LDFLAGS += $(OPT)

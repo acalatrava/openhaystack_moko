@@ -38,3 +38,13 @@ void startAdvertisement();
  * Function for the Power manager.
  */
 void power_manage(void);
+
+/**
+ * DFU required functions
+*/
+static void peer_manager_init();
+static void gap_params_init(void);
+static void gatt_init(void);
+static void services_init(void);
+static void conn_params_init(void);
+static void ble_dfu_buttonless_evt_handler(ble_dfu_buttonless_evt_type_t event);
