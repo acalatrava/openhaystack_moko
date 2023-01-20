@@ -163,7 +163,7 @@ void power_manage(void)
  *
  * @param[in] p_evt  Peer Manager event.
  */
-static void pm_evt_handler(pm_evt_t const * p_evt)
+void pm_evt_handler(pm_evt_t const * p_evt)
 {
     pm_handler_on_pm_evt(p_evt);
     pm_handler_flash_clean(p_evt);
@@ -171,7 +171,7 @@ static void pm_evt_handler(pm_evt_t const * p_evt)
 
 /**@brief Function for the Peer Manager initialization.
  */
-static void peer_manager_init()
+void peer_manager_init()
 {
     ble_gap_sec_params_t sec_param;
     ret_code_t           err_code;
@@ -208,7 +208,7 @@ static void peer_manager_init()
  * @details This function sets up all the necessary GAP (Generic Access Profile) parameters of the
  *          device including the device name, appearance, and the preferred connection parameters.
  */
-static void gap_params_init(void)
+void gap_params_init(void)
 {
     uint32_t                err_code;
     ble_gap_conn_params_t   gap_conn_params;
@@ -239,7 +239,7 @@ static void gap_params_init(void)
 /**@brief   Function for initializing the GATT module.
  * @details The GATT module handles ATT_MTU and Data Length update procedures automatically.
  */
-static void gatt_init(void)
+void gatt_init(void)
 {
     ret_code_t err_code = nrf_ble_gatt_init(&m_gatt, NULL);
     APP_ERROR_CHECK(err_code);
@@ -252,14 +252,14 @@ static void gatt_init(void)
  *
  * @param[in]   nrf_error   Error code containing information about what went wrong.
  */
-static void nrf_qwr_error_handler(uint32_t nrf_error)
+void nrf_qwr_error_handler(uint32_t nrf_error)
 {
     APP_ERROR_HANDLER(nrf_error);
 }
 
 /**@brief Function for initializing services that will be used by the application.
  */
-static void services_init(void)
+void services_init(void)
 {
     uint32_t                  err_code;
     nrf_ble_qwr_init_t        qwr_init  = {0};
@@ -311,7 +311,7 @@ static void services_init(void)
  *
  * @param[in] p_evt  Event received from the Connection Parameters Module.
  */
-static void on_conn_params_evt(ble_conn_params_evt_t * p_evt)
+void on_conn_params_evt(ble_conn_params_evt_t * p_evt)
 {
     uint32_t err_code;
 
@@ -326,14 +326,14 @@ static void on_conn_params_evt(ble_conn_params_evt_t * p_evt)
  *
  * @param[in] nrf_error  Error code containing information about what went wrong.
  */
-static void conn_params_error_handler(uint32_t nrf_error)
+void conn_params_error_handler(uint32_t nrf_error)
 {
     APP_ERROR_HANDLER(nrf_error);
 }
 
 /**@brief Function for initializing the Connection Parameters module.
  */
-static void conn_params_init(void)
+void conn_params_init(void)
 {
     uint32_t               err_code;
     ble_conn_params_init_t cp_init;

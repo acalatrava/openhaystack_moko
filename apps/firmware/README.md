@@ -33,7 +33,7 @@ cp _build/secure_bootloader_moko.hex ../../firmware/dfu_images
 cd ../../
 ```
 
-### Compile the firmeare
+### Compile the firmware
 ```
 cd firmware/build
 make
@@ -56,3 +56,8 @@ Merge the bootloader settings, the bootloader itself, the softdevice and the app
 mergehex -m bl_settings.hex secure_bootloader_moko.hex nrf52810_xxaa.hex ../../../nRF5_SDK_17.0.2_d674dde/components/softdevice/s112/hex/s112_nrf52_7.2.0_softdevice.hex --output full_dfu.hex
 ```
 
+Flash the firmware
+```
+nrfjprog -f nrf52 --recover; while [ $? != 0 ]; do nrfjprog -f nrf52 --recover; done;
+nrfjprog -f nrf52 --program full_dfu.hex --reset
+```

@@ -1,4 +1,5 @@
 #include "ble.h"
+#include "ble_dfu.h"
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -42,9 +43,9 @@ void power_manage(void);
 /**
  * DFU required functions
 */
-static void peer_manager_init();
-static void gap_params_init(void);
-static void gatt_init(void);
-static void services_init(void);
-static void conn_params_init(void);
-static void ble_dfu_buttonless_evt_handler(ble_dfu_buttonless_evt_type_t event);
+void peer_manager_init();
+void gap_params_init(void);
+void gatt_init(void);
+void services_init(void);
+void conn_params_init(void);
+void ble_dfu_buttonless_evt_handler(ble_dfu_buttonless_evt_type_t event);

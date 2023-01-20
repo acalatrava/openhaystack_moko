@@ -52,7 +52,6 @@ static bool app_shutdown_handler(nrf_pwr_mgmt_evt_t event)
     switch (event)
     {
         case NRF_PWR_MGMT_EVT_PREPARE_DFU:
-            NRF_LOG_INFO("Power management wants to reset to DFU mode.");
             // YOUR_JOB: Get ready to reset into DFU mode
             //
             // If you aren't finished with any ongoing tasks, return "false" to
@@ -84,7 +83,7 @@ static bool app_shutdown_handler(nrf_pwr_mgmt_evt_t event)
             return true;
     }
 
-    NRF_LOG_INFO("Power management allowed to reset to DFU mode.");
+    //Power management allowed to reset to DFU mode;
     return true;
 }
 
@@ -110,25 +109,19 @@ NRF_SDH_STATE_OBSERVER(m_buttonless_dfu_state_obs, 0) =
     .handler = buttonless_dfu_sdh_state_observer,
 };
 
-static void ble_dfu_buttonless_evt_handler(ble_dfu_buttonless_evt_type_t event)
+void ble_dfu_buttonless_evt_handler(ble_dfu_buttonless_evt_type_t event)
 {
-    ret_code_t    err_code;
-
     switch (event)
     {
         case BLE_DFU_EVT_BOOTLOADER_ENTER_PREPARE:
-            NRF_LOG_INFO("Device is preparing to enter bootloader mode\r\n");
             break;
  
         case BLE_DFU_EVT_BOOTLOADER_ENTER:
-            NRF_LOG_INFO("Device will enter bootloader mode\r\n");
             break;
  
         case BLE_DFU_EVT_BOOTLOADER_ENTER_FAILED:
-            NRF_LOG_ERROR("Device failed to enter bootloader mode\r\n");
             break;
         default:
-            NRF_LOG_INFO("Unknown event from ble_dfu.\r\n");
             break;
     }
 }
