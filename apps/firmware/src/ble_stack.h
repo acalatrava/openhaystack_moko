@@ -28,7 +28,7 @@ void setMacAddress(uint8_t *addr);
  * @param[in] dlen length of the data
  * @param[in] interval advertising interval in milliseconds
  */
-void setAdvertisementData(uint8_t *data, uint8_t dlen, int interval);
+void setAdvertisementData(uint8_t *data, uint8_t dlen);
 
 /**
  * Start advertising at the specified interval
@@ -46,6 +46,7 @@ void power_manage(void);
 void peer_manager_init();
 void gap_params_init(void);
 void gatt_init(void);
+void advertising_init(int interval);
 void services_init(void);
 void conn_params_init(void);
 void ble_dfu_buttonless_evt_handler(ble_dfu_buttonless_evt_type_t event);

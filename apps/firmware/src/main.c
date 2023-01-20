@@ -4,6 +4,10 @@
 #include <string.h>
 #include "ble_stack.h"
 #include "openhaystack.h"
+#include "app_timer.h"
+#include "nrf_log.h"
+#include "nrf_log_ctrl.h"
+#include "nrf_log_default_backends.h"
 
 // Includes for the DFU
 #include "nrf_power.h"
@@ -33,106 +37,47 @@ static char public_key[28] = {0x4e, 0xe3, 0xf3, 0xc5, 0xbf, 0x2f, 0xcb, 0x61,
                               0x77, 0x77, 0x2b, 0xe5, 0xc5, 0xe5, 0x4b, 0x03, 
                               0xaf, 0x76, 0xd5, 0xe1};
 
-/**
- * DFU functions
-*/
 
-/**@brief Handler for shutdown preparation.
+/**@brief Function for the Timer initialization.
  *
- * @details During shutdown procedures, this function will be called at a 1 second interval
- *          untill the function returns true. When the function returns true, it means that the
- *          app is ready to reset to DFU mode.
- *
- * @param[in]   event   Power manager event.
- *
- * @retval  True if shutdown is allowed by this power manager handler, otherwise false.
+ * @details Initializes the timer module. This creates and starts application timers.
  */
-static bool app_shutdown_handler(nrf_pwr_mgmt_evt_t event)
+static void timers_init(void)
 {
-    switch (event)
-    {
-        case NRF_PWR_MGMT_EVT_PREPARE_DFU:
-            // YOUR_JOB: Get ready to reset into DFU mode
-            //
-            // If you aren't finished with any ongoing tasks, return "false" to
-            // signal to the system that reset is impossible at this stage.
-            //
-            // Here is an example using a variable to delay resetting the device.
-            //
-            // if (!m_ready_for_reset)
-            // {
-            //      return false;
-            // }
-            // else
-            //{
-            //
-            //    // Device ready to enter
-            //    uint32_t err_code;
-            //    err_code = sd_softdevice_disable();
-            //    APP_ERROR_CHECK(err_code);
-            //    err_code = app_timer_stop_all();
-            //    APP_ERROR_CHECK(err_code);
-            //}
-            break;
 
-        default:
-            // YOUR_JOB: Implement any of the other events available from the power management module:
-            //      -NRF_PWR_MGMT_EVT_PREPARE_SYSOFF
-            //      -NRF_PWR_MGMT_EVT_PREPARE_WAKEUP
-            //      -NRF_PWR_MGMT_EVT_PREPARE_RESET
-            return true;
-    }
+    // Initialize timer module.
+    uint32_t err_code = app_timer_init();
+    APP_ERROR_CHECK(err_code);
 
-    //Power management allowed to reset to DFU mode;
-    return true;
+    // Create timers.
+
+    /* YOUR_JOB: Create any timers to be used by the application.
+                 Below is an example of how to create a timer.
+                 For every new timer needed, increase the value of the macro APP_TIMER_MAX_TIMERS by
+                 one.
+       uint32_t err_code;
+       err_code = app_timer_create(&m_app_timer_id, APP_TIMER_MODE_REPEATED, timer_timeout_handler);
+       APP_ERROR_CHECK(err_code); */
 }
 
-/**@brief Register application shutdown handler with priority 0.
+
+/**@brief Function for the Power manager.
  */
-NRF_PWR_MGMT_HANDLER_REGISTER(app_shutdown_handler, 0);
-
-static void buttonless_dfu_sdh_state_observer(nrf_sdh_state_evt_t state, void * p_context)
+static void log_init(void)
 {
-    if (state == NRF_SDH_EVT_STATE_DISABLED)
-    {
-        // Softdevice was disabled before going into reset. Inform bootloader to skip CRC on next boot.
-        nrf_power_gpregret2_set(BOOTLOADER_DFU_SKIP_CRC);
+    uint32_t err_code = NRF_LOG_INIT(NULL);
+    APP_ERROR_CHECK(err_code);
 
-        //Go to system off.
-        nrf_pwr_mgmt_shutdown(NRF_PWR_MGMT_SHUTDOWN_GOTO_SYSOFF);
-    }
+    NRF_LOG_DEFAULT_BACKENDS_INIT();
 }
-
-/* nrf_sdh state observer. */
-NRF_SDH_STATE_OBSERVER(m_buttonless_dfu_state_obs, 0) =
-{
-    .handler = buttonless_dfu_sdh_state_observer,
-};
-
-void ble_dfu_buttonless_evt_handler(ble_dfu_buttonless_evt_type_t event)
-{
-    switch (event)
-    {
-        case BLE_DFU_EVT_BOOTLOADER_ENTER_PREPARE:
-            break;
- 
-        case BLE_DFU_EVT_BOOTLOADER_ENTER:
-            break;
- 
-        case BLE_DFU_EVT_BOOTLOADER_ENTER_FAILED:
-            break;
-        default:
-            break;
-    }
-}
-
-
 /**
  * main function
  */
 int main(void) {
     // Init DFU
     // Initialize the async SVCI interface to bootloader before any interrupts are enabled.
+    log_init();
+
     ret_code_t err_code;
     err_code = ble_dfu_buttonless_async_svci_init();
     APP_ERROR_CHECK(err_code);
@@ -145,6 +90,9 @@ int main(void) {
     // Set key to be advertised
     data_len = setAdvertisementKey(public_key, &ble_address, &raw_data);
 
+    // Timers
+    timers_init();
+
     // Init BLE stack
     init_ble();
 
@@ -156,8 +104,10 @@ int main(void) {
     // Set bluetooth address
     setMacAddress(ble_address);
 
+    advertising_init(ADVERTISING_INTERVAL);
+
     // Set advertisement data
-    setAdvertisementData(raw_data, data_len, ADVERTISING_INTERVAL);
+    setAdvertisementData(raw_data, data_len);
 
     // Enable services
     services_init();

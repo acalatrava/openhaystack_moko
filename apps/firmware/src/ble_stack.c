@@ -4,7 +4,6 @@
 #include "ble_stack.h"
 
 #include "nordic_common.h"
-#include "bsp.h"
 #include "nrf_soc.h"
 #include "nrf_sdh.h"
 #include "nrf_sdh_ble.h"
@@ -17,6 +16,10 @@
 #include "nrf_ble_gatt.h"
 #include "nrf_ble_qwr.h"
 #include "ble_conn_params.h"
+#include "ble_advertising.h"
+#include "nrf_power.h"
+#include "nrf_bootloader_info.h"
+#include "ble_conn_state.h"
 
 #ifndef uint8_t
     typedef __uint8_t uint8_t;
@@ -25,8 +28,20 @@
     typedef __uint64_t uint64_t;
 #endif
 
+#define APP_BLE_OBSERVER_PRIO           3                                           /**< Application's BLE observer priority. You shouldn't need to modify this value. */
 #define APP_BLE_CONN_CFG_TAG            1
 #define CFG_BLE_TX_POWER_LEVEL          4
+
+#define MIN_CONN_INTERVAL               MSEC_TO_UNITS(100, UNIT_1_25_MS)            /**< Minimum acceptable connection interval (0.1 seconds). */
+#define MAX_CONN_INTERVAL               MSEC_TO_UNITS(200, UNIT_1_25_MS)            /**< Maximum acceptable connection interval (0.2 second). */
+#define SLAVE_LATENCY                   0                                           /**< Slave latency. */
+#define CONN_SUP_TIMEOUT                MSEC_TO_UNITS(4000, UNIT_10_MS)             /**< Connection supervisory timeout (4 seconds). */
+
+#define DEVICE_NAME                     "SpaceInvader"                         /**< Name of device. Will be included in the advertising data. */
+#define FIRST_CONN_PARAMS_UPDATE_DELAY  APP_TIMER_TICKS(5000)                       /**< Time from initiating event (connect or start of notification) to first time sd_ble_gap_conn_param_update is called (5 seconds). */
+#define NEXT_CONN_PARAMS_UPDATE_DELAY   APP_TIMER_TICKS(30000)                      /**< Time between each call to sd_ble_gap_conn_param_update after the first call (30 seconds). */
+#define MAX_CONN_PARAMS_UPDATE_COUNT    3                                           /**< Number of attempts before giving up the connection parameter negotiation. */
+
 #define SEC_PARAM_BOND                  1                                           /**< Perform bonding. */
 #define SEC_PARAM_MITM                  0                                           /**< Man In The Middle protection not required. */
 #define SEC_PARAM_LESC                  0                                           /**< LE Secure Connections not enabled. */
@@ -36,17 +51,10 @@
 #define SEC_PARAM_MIN_KEY_SIZE          7                                           /**< Minimum encryption key size. */
 #define SEC_PARAM_MAX_KEY_SIZE          16                                          /**< Maximum encryption key size. */
 
-#define MIN_CONN_INTERVAL               MSEC_TO_UNITS(1000, UNIT_1_25_MS)            /**< Minimum acceptable connection interval (0.1 seconds). */
-#define MAX_CONN_INTERVAL               MSEC_TO_UNITS(2000, UNIT_1_25_MS)            /**< Maximum acceptable connection interval (0.2 second). */
-#define SLAVE_LATENCY                   0                                           /**< Slave latency. */
-#define CONN_SUP_TIMEOUT                MSEC_TO_UNITS(4000, UNIT_10_MS)             /**< Connection supervisory timeout (4 seconds). */
-#define DEVICE_NAME                     "SpaceInvader"                         /**< Name of device. Will be included in the advertising data. */
-#define FIRST_CONN_PARAMS_UPDATE_DELAY  APP_TIMER_TICKS(5000)                       /**< Time from initiating event (connect or start of notification) to first time sd_ble_gap_conn_param_update is called (5 seconds). */
-#define NEXT_CONN_PARAMS_UPDATE_DELAY   APP_TIMER_TICKS(30000)                      /**< Time between each call to sd_ble_gap_conn_param_update after the first call (30 seconds). */
-#define MAX_CONN_PARAMS_UPDATE_COUNT    3                                           /**< Number of attempts before giving up the connection parameter negotiation. */
-
 NRF_BLE_GATT_DEF(m_gatt);                                                           /**< GATT module instance. */
 NRF_BLE_QWR_DEF(m_qwr);                                                             /**< Context for the Queued Write module.*/
+BLE_ADVERTISING_DEF(m_advertising);                                                 /**< Advertising module instance. */
+
 static uint16_t m_conn_handle = BLE_CONN_HANDLE_INVALID;                            /**< Handle of the current connection. */
 
 enum
@@ -55,11 +63,191 @@ enum
   CONN_CFG_CENTRAL = 2,
 };
 
-static uint8_t              m_adv_handle = BLE_GAP_ADV_SET_HANDLE_NOT_SET;
+// YOUR_JOB: Use UUIDs for service(s) used in your application.
+static ble_uuid_t m_adv_uuids[] = {{BLE_UUID_DEVICE_INFORMATION_SERVICE, BLE_UUID_TYPE_BLE}};
+
+
+/**@brief Handler for shutdown preparation.
+ *
+ * @details During shutdown procedures, this function will be called at a 1 second interval
+ *          untill the function returns true. When the function returns true, it means that the
+ *          app is ready to reset to DFU mode.
+ *
+ * @param[in]   event   Power manager event.
+ *
+ * @retval  True if shutdown is allowed by this power manager handler, otherwise false.
+ */
+static bool app_shutdown_handler(nrf_pwr_mgmt_evt_t event)
+{
+    switch (event)
+    {
+        case NRF_PWR_MGMT_EVT_PREPARE_DFU:
+            // YOUR_JOB: Get ready to reset into DFU mode
+            //
+            // If you aren't finished with any ongoing tasks, return "false" to
+            // signal to the system that reset is impossible at this stage.
+            //
+            // Here is an example using a variable to delay resetting the device.
+            //
+            // if (!m_ready_for_reset)
+            // {
+            //      return false;
+            // }
+            // else
+            //{
+            //
+            //    // Device ready to enter
+            //    uint32_t err_code;
+            //    err_code = sd_softdevice_disable();
+            //    APP_ERROR_CHECK(err_code);
+            //    err_code = app_timer_stop_all();
+            //    APP_ERROR_CHECK(err_code);
+            //}
+            break;
+
+        default:
+            // YOUR_JOB: Implement any of the other events available from the power management module:
+            //      -NRF_PWR_MGMT_EVT_PREPARE_SYSOFF
+            //      -NRF_PWR_MGMT_EVT_PREPARE_WAKEUP
+            //      -NRF_PWR_MGMT_EVT_PREPARE_RESET
+            return true;
+    }
+
+    //Power management allowed to reset to DFU mode
+    return true;
+}
+
+//lint -esym(528, m_app_shutdown_handler)
+/**@brief Register application shutdown handler with priority 0.
+ */
+NRF_PWR_MGMT_HANDLER_REGISTER(app_shutdown_handler, 0);
+
+static void buttonless_dfu_sdh_state_observer(nrf_sdh_state_evt_t state, void * p_context)
+{
+    if (state == NRF_SDH_EVT_STATE_DISABLED)
+    {
+        // Softdevice was disabled before going into reset. Inform bootloader to skip CRC on next boot.
+        nrf_power_gpregret2_set(BOOTLOADER_DFU_SKIP_CRC);
+
+        //Go to system off.
+        nrf_pwr_mgmt_shutdown(NRF_PWR_MGMT_SHUTDOWN_GOTO_SYSOFF);
+    }
+}
+
+/* nrf_sdh state observer. */
+NRF_SDH_STATE_OBSERVER(m_buttonless_dfu_state_obs, 0) =
+{
+    .handler = buttonless_dfu_sdh_state_observer,
+};
+
+static void advertising_config_get(ble_adv_modes_config_t * p_config)
+{
+    memset(p_config, 0, sizeof(ble_adv_modes_config_t));
+
+    p_config->ble_adv_fast_enabled  = true;
+    p_config->ble_adv_fast_interval = 300;
+    p_config->ble_adv_fast_timeout  = 18000;
+}
+
+static void disconnect(uint16_t conn_handle, void * p_context)
+{
+    UNUSED_PARAMETER(p_context);
+
+    ret_code_t err_code = sd_ble_gap_disconnect(conn_handle, BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION);
+    if (err_code != NRF_SUCCESS)
+    {
+    }
+    else
+    {
+    }
+}
+
+void ble_dfu_buttonless_evt_handler(ble_dfu_buttonless_evt_type_t event)
+{
+    switch (event)
+    {
+        case BLE_DFU_EVT_BOOTLOADER_ENTER_PREPARE:
+        {
+            // Prevent device from advertising on disconnect.
+            ble_adv_modes_config_t config;
+            advertising_config_get(&config);
+            config.ble_adv_on_disconnect_disabled = true;
+            ble_advertising_modes_config_set(&m_advertising, &config);
+
+            // Disconnect all other bonded devices that currently are connected.
+            // This is required to receive a service changed indication
+            // on bootup after a successful (or aborted) Device Firmware Update.
+            ble_conn_state_for_each_connected(disconnect, NULL);
+            break;
+        }
+ 
+        case BLE_DFU_EVT_BOOTLOADER_ENTER:
+            break;
+ 
+        case BLE_DFU_EVT_BOOTLOADER_ENTER_FAILED:
+            break;
+        default:
+            break;
+    }
+}
 
 /*******************************************************************************
  *   BLE stack specific functions
  ******************************************************************************/
+
+
+/**@brief Function for handling BLE events.
+ *
+ * @param[in]   p_ble_evt   Bluetooth stack event.
+ * @param[in]   p_context   Unused.
+ */
+static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
+{
+    uint32_t err_code = NRF_SUCCESS;
+
+    switch (p_ble_evt->header.evt_id)
+    {
+        case BLE_GAP_EVT_DISCONNECTED:
+            // LED indication will be changed when advertising starts.
+            break;
+
+        case BLE_GAP_EVT_CONNECTED:
+            m_conn_handle = p_ble_evt->evt.gap_evt.conn_handle;
+            err_code = nrf_ble_qwr_conn_handle_assign(&m_qwr, m_conn_handle);
+            APP_ERROR_CHECK(err_code);
+            break;
+
+        case BLE_GAP_EVT_PHY_UPDATE_REQUEST:
+        {
+            ble_gap_phys_t const phys =
+            {
+                .rx_phys = BLE_GAP_PHY_AUTO,
+                .tx_phys = BLE_GAP_PHY_AUTO,
+            };
+            err_code = sd_ble_gap_phy_update(p_ble_evt->evt.gap_evt.conn_handle, &phys);
+            APP_ERROR_CHECK(err_code);
+            break;
+        }
+
+        case BLE_GATTC_EVT_TIMEOUT:
+            // Disconnect on GATT Client timeout event.
+            err_code = sd_ble_gap_disconnect(p_ble_evt->evt.gattc_evt.conn_handle,
+                                             BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION);
+            APP_ERROR_CHECK(err_code);
+            break;
+
+        case BLE_GATTS_EVT_TIMEOUT:
+            // Disconnect on GATT Server timeout event.
+            err_code = sd_ble_gap_disconnect(p_ble_evt->evt.gatts_evt.conn_handle,
+                                             BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION);
+            APP_ERROR_CHECK(err_code);
+            break;
+
+        default:
+            // No implementation needed.
+            break;
+    }
+}
 
 /*  
  *  init_ble will initialize the ble stack, it will use the crystal definition based on NRF_CLOCK_LFCLKSRC. 
@@ -83,51 +271,101 @@ void init_ble() {
     // Enable BLE stack.
     err_code = nrf_sdh_ble_enable(&ram_start);
     APP_ERROR_CHECK(err_code);
+
+    NRF_SDH_BLE_OBSERVER(m_ble_observer, APP_BLE_OBSERVER_PRIO, ble_evt_handler, NULL);
 }
 
 /**
  * setMacAddress will set the bluetooth address
  */
 void setMacAddress(uint8_t *addr) {
-    
+    ret_code_t err_code;
+
+    ble_gap_addr_t gap_addr;
+    gap_addr.addr_id_peer = 0;
+    gap_addr.addr_type = BLE_GAP_ADDR_TYPE_PUBLIC;
+
+    memcpy(gap_addr.addr, addr, sizeof(gap_addr.addr));
+    err_code = sd_ble_gap_addr_set(&gap_addr);
+    APP_ERROR_CHECK(err_code);
 }
+
+
+/**@brief Function for putting the chip into sleep mode.
+ *
+ * @note This function will not return.
+ */
+static void sleep_mode_enter(void)
+{
+    ret_code_t err_code;
+
+    //Disable SoftDevice. It is required to be able to write to GPREGRET2 register (SoftDevice API blocks it).
+    //GPREGRET2 register holds the information about skipping CRC check on next boot.
+    err_code = nrf_sdh_disable_request();
+    APP_ERROR_CHECK(err_code);
+}
+
+
+/**@brief Function for handling advertising events.
+ *
+ * @details This function will be called for advertising events which are passed to the application.
+ *
+ * @param[in] ble_adv_evt  Advertising event.
+ */
+static void on_adv_evt(ble_adv_evt_t ble_adv_evt)
+{
+    switch (ble_adv_evt)
+    {
+        case BLE_ADV_EVT_FAST:
+            break;
+
+        case BLE_ADV_EVT_IDLE:
+            sleep_mode_enter();
+            break;
+
+        default:
+            break;
+    }
+}
+
+/**@brief Function for initializing the Advertising functionality.
+ */
+void advertising_init(int interval)
+{
+    uint32_t               err_code;
+    ble_advertising_init_t init;
+
+    memset(&init, 0, sizeof(init));
+
+    init.advdata.name_type               = BLE_ADVDATA_FULL_NAME;
+    init.advdata.include_appearance      = true;
+    init.advdata.flags                   = BLE_GAP_ADV_FLAGS_LE_ONLY_GENERAL_DISC_MODE;
+    init.advdata.uuids_complete.uuid_cnt = sizeof(m_adv_uuids) / sizeof(m_adv_uuids[0]);
+    init.advdata.uuids_complete.p_uuids  = m_adv_uuids;
+
+    advertising_config_get(&init.config);
+
+    init.config.ble_adv_fast_enabled = false;
+    init.config.ble_adv_slow_enabled = true;
+    init.config.ble_adv_slow_interval = MSEC_TO_UNITS(interval, UNIT_0_625_MS);
+    init.config.ble_adv_slow_timeout = 0;
+
+    init.evt_handler = on_adv_evt;
+
+    err_code = ble_advertising_init(&m_advertising, &init);
+    APP_ERROR_CHECK(err_code);
+
+    ble_advertising_conn_cfg_tag_set(&m_advertising, APP_BLE_CONN_CFG_TAG);
+}
+
 
 /**
  * setAdvertisementData will set the data to be advertised
  */
-void setAdvertisementData(uint8_t *data, uint8_t dlen, int interval) {
-    ret_code_t err_code;
-
-    static ble_gap_adv_data_t gap_adv =
-        {
-            .adv_data      = { .p_data = NULL, .len = 0 },
-            .scan_rsp_data = { .p_data = NULL, .len = 0 } // No scan response data needed
-        };
-
-    gap_adv.adv_data.p_data = data;
-    gap_adv.adv_data.len = dlen;
-
-    ble_gap_adv_params_t adv_para =
-        {
-            .properties    = { .type = BLE_GAP_ADV_FLAGS_LE_ONLY_GENERAL_DISC_MODE, .anonymous  = 0 },
-            .p_peer_addr   = NULL                                        , // Undirected advertisement
-            .interval      = MSEC_TO_UNITS(interval, UNIT_0_625_MS)      , // advertising interval (in units of 0.625 ms)
-            .duration      = 0                                           , // in 10-ms unit
-
-            .max_adv_evts  = 0                        , // TODO can be used for fast/slow mode
-            .channel_mask  = { 0, 0, 0, 0, 0 }        , // 40 channel, set 1 to disable
-            .filter_policy = BLE_GAP_ADV_FP_ANY       ,
-
-            .primary_phy   = BLE_GAP_PHY_AUTO         , // 1 Mbps will be used
-            .secondary_phy = BLE_GAP_PHY_AUTO         , // 1 Mbps will be used
-            // , .set_id, .scan_req_notification
-        };
-
-    err_code = sd_ble_gap_adv_set_configure(&m_adv_handle, &gap_adv, &adv_para);
-    APP_ERROR_CHECK(err_code);
-
-    err_code = sd_ble_gap_tx_power_set(BLE_GAP_TX_POWER_ROLE_ADV, m_adv_handle, CFG_BLE_TX_POWER_LEVEL);
-    APP_ERROR_CHECK(err_code);
+void setAdvertisementData(uint8_t *data, uint8_t dlen) {
+    memcpy(m_advertising.adv_data.adv_data.p_data, data, dlen);
+    m_advertising.adv_data.adv_data.len = dlen;
+    return;
 }
 
 /**
@@ -138,7 +376,7 @@ void setAdvertisementData(uint8_t *data, uint8_t dlen, int interval) {
 void startAdvertisement(int interval) {
     ret_code_t err_code;
 
-    err_code = sd_ble_gap_adv_start(m_adv_handle, CONN_CFG_PERIPHERAL);
+    err_code = ble_advertising_start(&m_advertising, BLE_ADV_MODE_FAST);
     APP_ERROR_CHECK(err_code);
 }
 

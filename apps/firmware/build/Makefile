@@ -58,10 +58,6 @@ SRC_FILES += \
   $(PROJ_DIR)/ble_stack.c \
   $(PROJ_DIR)/openhaystack.c \
   $(PROJ_DIR)/main.c \
-  $(PROJ_DIR)/dfu/ble_dfu_bonded.c \
-  $(PROJ_DIR)/dfu/ble_dfu_unbonded.c \
-  $(PROJ_DIR)/dfu/ble_dfu.c \
-  $(PROJ_DIR)/dfu/nrf_dfu_svci.c \
   $(SDK_ROOT)/components/libraries/bootloader/dfu/nrf_dfu_svci.c \
   $(SDK_ROOT)/external/segger_rtt/SEGGER_RTT.c \
   $(SDK_ROOT)/external/segger_rtt/SEGGER_RTT_Syscalls_GCC.c \
@@ -91,7 +87,7 @@ SRC_FILES += \
   $(SDK_ROOT)/components/softdevice/common/nrf_sdh.c \
   $(SDK_ROOT)/components/softdevice/common/nrf_sdh_ble.c \
   $(SDK_ROOT)/components/softdevice/common/nrf_sdh_soc.c \
-
+  
 # Include folders common to all targets
 INC_FOLDERS += \
   $(SDK_ROOT)/components \
