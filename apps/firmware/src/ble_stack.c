@@ -62,7 +62,15 @@ void init_ble() {
  * setMacAddress will set the bluetooth address
  */
 void setMacAddress(uint8_t *addr) {
-    
+    ret_code_t err_code;
+
+    ble_gap_addr_t gap_addr;
+    gap_addr.addr_id_peer = 0;
+    gap_addr.addr_type = BLE_GAP_ADDR_TYPE_PUBLIC;
+
+    memcpy(gap_addr.addr, addr, sizeof(gap_addr.addr));
+    err_code = sd_ble_gap_addr_set(&gap_addr);
+    APP_ERROR_CHECK(err_code);
 }
 
 /**
