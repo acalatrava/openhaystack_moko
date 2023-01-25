@@ -28,15 +28,30 @@
 
 /** 
  * advertising interval in milliseconds 
+ * 
+ * According to power profiler https://devzone.nordicsemi.com/power/w/opp/2/online-power-profiler-for-bluetooth-le
+ * average current is 11 µA with a 3000msec interval on a nRF52810
+ * so life expectancy of a CR2032 coin-cell (the one used on Moko M1) would be about 1.5 year
+ * and life expectancy of a CR2477 coin-cell (the one used on Moko M2) would be about 6 years
  */
-#define ADVERTISING_INTERVAL 500
+#define ADVERTISING_INTERVAL 3000
 
-//static char public_key[28] = "OFFLINEFINDINGPUBLICKEYHERE!";
+static char public_key[28] = "OFFLINEFINDINGPUBLICKEYHERE!";
+
+//Test1
+/*
 static char public_key[28] = {0x4e, 0xe3, 0xf3, 0xc5, 0xbf, 0x2f, 0xcb, 0x61, 
                               0x06, 0xc2, 0xb5, 0x1d, 0x80, 0xff, 0x60, 0xb8, 
                               0x77, 0x77, 0x2b, 0xe5, 0xc5, 0xe5, 0x4b, 0x03, 
                               0xaf, 0x76, 0xd5, 0xe1};
-
+*/
+//Test2
+/*
+static char public_key[28] = {0x60, 0x52, 0x77, 0xfe, 0xdc, 0x80, 0xb1, 0x64, 
+                              0x4f, 0x9e, 0x16, 0xdf, 0xde, 0x38, 0xeb, 0x4c, 
+                              0xd6, 0xaa, 0xf4, 0xee, 0xb3, 0xf6, 0xd5, 0x70, 
+                              0x57, 0x3, 0x1, 0x9f};
+*/
 
 /**@brief Function for the Timer initialization.
  *
@@ -107,7 +122,17 @@ int main(void) {
     advertising_init(ADVERTISING_INTERVAL);
 
     // Set advertisement data
-    setAdvertisementData(raw_data, data_len);
+    if (public_key[0] == 'O' &&
+        public_key[1] == 'F' &&
+        public_key[2] == 'F' &&
+        public_key[3] == 'L' &&
+        public_key[4] == 'I' &&
+        public_key[5] == 'N' &&
+        public_key[6] == 'E') {
+            // Leave unconfigured
+        } else {
+            setAdvertisementData(raw_data, data_len);
+        }
 
     // Enable services
     services_init();

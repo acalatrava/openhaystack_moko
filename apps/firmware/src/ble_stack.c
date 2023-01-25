@@ -454,14 +454,25 @@ void gap_params_init(void)
 
     BLE_GAP_CONN_SEC_MODE_SET_OPEN(&sec_mode);
 
+    // Get the current mac
+    ble_gap_addr_t gap_addr;
+    memset(&gap_addr, 0, sizeof(gap_addr));
+    err_code = sd_ble_gap_addr_get(&gap_addr);
+
+    char name[strlen(DEVICE_NAME) + 7];
+    sprintf(name, "%s_%02X%02X", DEVICE_NAME, gap_addr.addr[1], gap_addr.addr[0]);
+
     err_code = sd_ble_gap_device_name_set(&sec_mode,
-                                          (const uint8_t *)DEVICE_NAME,
-                                          strlen(DEVICE_NAME));
+                                          (const uint8_t *)name,
+                                          strlen(name));
     APP_ERROR_CHECK(err_code);
 
     /* YOUR_JOB: Use an appearance value matching the application's use case.
        err_code = sd_ble_gap_appearance_set(BLE_APPEARANCE_);
        APP_ERROR_CHECK(err_code); */
+
+    err_code = sd_ble_gap_appearance_set(BLE_APPEARANCE_GENERIC_TAG);
+    APP_ERROR_CHECK(err_code);
 
     memset(&gap_conn_params, 0, sizeof(gap_conn_params));
 
