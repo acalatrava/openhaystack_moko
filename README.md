@@ -1,6 +1,12 @@
 # openhaystack_moko
 This is an internal project for SpaceInvaders to create a OpenHaystack compatible device on a Moko M1 and Moko M2 devices.
 
+Currently this firmware is compatible with the following models:
+Moko M1-PNDA
+Moko M2-PNDA-HA
+
+This firmware support DFU updating, this way you can generate tags and deploy them over the air.
+
 ## Setting up
 
 ### Get submodules

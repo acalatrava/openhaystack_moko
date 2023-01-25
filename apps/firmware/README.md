@@ -61,3 +61,14 @@ Flash the firmware
 nrfjprog -f nrf52 --recover; while [ $? != 0 ]; do nrfjprog -f nrf52 --recover; done;
 nrfjprog -f nrf52 --program full_dfu.hex --reset
 ```
+
+### Create a DFU package
+Copy the firmware hex to `dfu_images` directory
+```
+cp ../../firmware/build/_build/nrf52810_xxaa.hex . 
+```
+
+Generate package
+```
+nrfutil pkg generate --hw-version 52 --sd-req 0x0100 --application-version 1 --application nrf52810_xxaa.hex --sd-id 0x103 --key-file private.key app.zip
+```
