@@ -62,6 +62,11 @@ nrfjprog -f nrf52 --recover; while [ $? != 0 ]; do nrfjprog -f nrf52 --recover; 
 nrfjprog -f nrf52 --program full_dfu.hex --reset
 ```
 
+To generate a bin file of the full firmware you can read it afterwards (this was the better way to "convert" the hex to bin)
+```
+nrfjprog -f nrf52 --readcode full_dfu.bin
+```
+
 ### Create a DFU package
 Copy the firmware hex to `dfu_images` directory
 ```
