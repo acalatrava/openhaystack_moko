@@ -358,6 +358,27 @@ void advertising_init(int interval)
     ble_advertising_conn_cfg_tag_set(&m_advertising, APP_BLE_CONN_CFG_TAG);
 }
 
+/**
+ * updateAdvertisementData will update the data to be advertised
+ */
+void updateAdvertisementData(uint8_t *data, uint8_t dlen) {
+    uint32_t               err_code;
+    
+    setAdvertisementData(data, dlen);
+
+    err_code = sd_ble_gap_adv_stop(m_advertising.adv_handle);
+    APP_ERROR_CHECK(err_code);
+
+    err_code = sd_ble_gap_adv_set_configure(&m_advertising.adv_handle,
+                                    m_advertising.p_adv_data,
+                                    NULL);
+    APP_ERROR_CHECK(err_code);
+
+    err_code = ble_advertising_start(&m_advertising, BLE_ADV_MODE_FAST);
+    APP_ERROR_CHECK(err_code);
+
+    return;
+}
 
 /**
  * setAdvertisementData will set the data to be advertised

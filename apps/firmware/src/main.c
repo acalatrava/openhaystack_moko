@@ -36,6 +36,22 @@
  */
 #define ADVERTISING_INTERVAL 3000
 
+/**
+ * config mode timeout
+ * 
+ * This setting will specify for how long the device will remain on "config mode" before start
+ * advertising the location beacon. Actually you can config the device on "advertising mode" but
+ * on "config mode" it will broadcast its name.
+ */
+#define CONFIG_MODE_TIMEOUT APP_TIMER_TICKS(60000L) // 60 seconds
+
+// Define the "config mode" timer
+APP_TIMER_DEF(config_mode_timer);
+
+/**
+ * This is the default public key. You can either modify this variable or patch the binary firmware
+ * once compiled, which is the preferred way since it can be done without recompilation.
+ */
 static char public_key[28] = "OFFLINEFINDINGPUBLICKEYHERE!";
 
 //Test1
@@ -64,17 +80,43 @@ static void timers_init(void)
     uint32_t err_code = app_timer_init();
     APP_ERROR_CHECK(err_code);
 
-    // Create timers.
+    err_code = app_timer_create(&config_mode_timer, 
+                                APP_TIMER_MODE_SINGLE_SHOT, 
+                                config_timer_handler);
+    APP_ERROR_CHECK(err_code);
 
-    /* YOUR_JOB: Create any timers to be used by the application.
-                 Below is an example of how to create a timer.
-                 For every new timer needed, increase the value of the macro APP_TIMER_MAX_TIMERS by
-                 one.
-       uint32_t err_code;
-       err_code = app_timer_create(&m_app_timer_id, APP_TIMER_MODE_REPEATED, timer_timeout_handler);
-       APP_ERROR_CHECK(err_code); */
+
 }
 
+/**@brief The handler of the config timer
+ * 
+ * @details this function will be called when the timer timeouts
+ */
+static void config_timer_handler(void * p_context)
+{
+    // Variable to hold the data to advertise
+    uint8_t *ble_address;
+    uint8_t *raw_data;
+    uint8_t data_len;
+
+    // Set key to be advertised
+    data_len = setAdvertisementKey(public_key, &ble_address, &raw_data);
+
+    // Update advertisement
+    updateAdvertisementData(raw_data, data_len);
+}
+
+/**@brief Function to start the timers
+ * 
+ */
+static void timers_start(void)
+{
+       ret_code_t err_code;
+       err_code = app_timer_start(config_mode_timer, 
+                                    CONFIG_MODE_TIMEOUT, 
+                                    NULL);
+       APP_ERROR_CHECK(err_code);
+}
 
 /**@brief Function for the Power manager.
  */
@@ -100,10 +142,9 @@ int main(void) {
     // Variable to hold the data to advertise
     uint8_t *ble_address;
     uint8_t *raw_data;
-    uint8_t data_len;
 
     // Set key to be advertised
-    data_len = setAdvertisementKey(public_key, &ble_address, &raw_data);
+    setAdvertisementKey(public_key, &ble_address, &raw_data);
 
     // Timers
     timers_init();
@@ -121,7 +162,11 @@ int main(void) {
 
     advertising_init(ADVERTISING_INTERVAL);
 
-    // Set advertisement data
+    // Enable services
+    services_init();
+    conn_params_init();
+
+    // Start timers if the device is configured
     if (public_key[0] == 'O' &&
         public_key[1] == 'F' &&
         public_key[2] == 'F' &&
@@ -131,12 +176,8 @@ int main(void) {
         public_key[6] == 'E') {
             // Leave unconfigured
         } else {
-            setAdvertisementData(raw_data, data_len);
+            timers_start();
         }
-
-    // Enable services
-    services_init();
-    conn_params_init();
 
     // Start advertising
     startAdvertisement();

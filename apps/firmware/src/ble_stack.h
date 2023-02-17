@@ -22,18 +22,30 @@ void init_ble();
 void setMacAddress(uint8_t *addr);
 
 /**
- * startAdvertisingWithData will set the data to be advertised
+ * setAdvertisementData will set the data to be advertised
  * 
  * @param[in] data raw data to be advertised
  * @param[in] dlen length of the data
- * @param[in] interval advertising interval in milliseconds
  */
 void setAdvertisementData(uint8_t *data, uint8_t dlen);
 
 /**
- * Start advertising at the specified interval
+ * updateAdvertisementData will update the data to be advertised
+ * 
+ * @param[in] data raw data to be advertised
+ * @param[in] dlen length of the data
+ */
+void updateAdvertisementData(uint8_t *data, uint8_t dlen);
+
+/**
+ * Start advertising
  */
 void startAdvertisement();
+
+/**
+ * Initialize advertising with specified interval in msec
+ */
+void advertising_init(int interval);
 
 /**
  * Function for the Power manager.
@@ -46,7 +58,6 @@ void power_manage(void);
 void peer_manager_init();
 void gap_params_init(void);
 void gatt_init(void);
-void advertising_init(int interval);
 void services_init(void);
 void conn_params_init(void);
 void ble_dfu_buttonless_evt_handler(ble_dfu_buttonless_evt_type_t event);
