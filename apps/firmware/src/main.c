@@ -69,6 +69,24 @@ static char public_key[28] = {0x60, 0x52, 0x77, 0xfe, 0xdc, 0x80, 0xb1, 0x64,
                               0x57, 0x3, 0x1, 0x9f};
 */
 
+/**@brief The handler of the config timer
+ * 
+ * @details this function will be called when the timer timeouts
+ */
+static void config_timer_handler(void * p_context)
+{
+    // Variable to hold the data to advertise
+    uint8_t *ble_address;
+    uint8_t *raw_data;
+    uint8_t data_len;
+
+    // Set key to be advertised
+    data_len = setAdvertisementKey(public_key, &ble_address, &raw_data);
+
+    // Update advertisement
+    updateAdvertisementData(raw_data, data_len);
+}
+
 /**@brief Function for the Timer initialization.
  *
  * @details Initializes the timer module. This creates and starts application timers.
@@ -86,24 +104,6 @@ static void timers_init(void)
     APP_ERROR_CHECK(err_code);
 
 
-}
-
-/**@brief The handler of the config timer
- * 
- * @details this function will be called when the timer timeouts
- */
-static void config_timer_handler(void * p_context)
-{
-    // Variable to hold the data to advertise
-    uint8_t *ble_address;
-    uint8_t *raw_data;
-    uint8_t data_len;
-
-    // Set key to be advertised
-    data_len = setAdvertisementKey(public_key, &ble_address, &raw_data);
-
-    // Update advertisement
-    updateAdvertisementData(raw_data, data_len);
 }
 
 /**@brief Function to start the timers
