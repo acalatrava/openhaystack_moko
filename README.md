@@ -1,5 +1,7 @@
 # openhaystack_moko
-This is an internal project for SpaceInvaders to create a OpenHaystack compatible device on a Moko M1 and Moko M2 devices.
+This is an internal project developed by Antonio Calatrava for SpaceInvader Europe Aps to create a OpenHaystack compatible device on a Moko M1 and Moko M2 devices.
+
+In November 2023, SpaceInvader Europe Aps open sourced the project under the MIT license so others may benefit and contribute further.
 
 Currently this firmware is compatible with the following models:
 Moko M1-PNDA
