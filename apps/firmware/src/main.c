@@ -157,8 +157,18 @@ int main(void) {
     gap_params_init();
     gatt_init();
 
-    // Set bluetooth address
-    setMacAddress(ble_address);
+    // Set bluetooth MAC address only if the device is configured
+    if (public_key[0] == 'O' &&
+        public_key[1] == 'F' &&
+        public_key[2] == 'F' &&
+        public_key[3] == 'L' &&
+        public_key[4] == 'I' &&
+        public_key[5] == 'N' &&
+        public_key[6] == 'E') {
+            // Keep default MAC address
+        } else {
+            setMacAddress(ble_address);
+        }
 
     advertising_init(ADVERTISING_INTERVAL);
 
