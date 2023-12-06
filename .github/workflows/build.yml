@@ -20,7 +20,7 @@ jobs:
         run: docker run --platform linux/amd64 --env "PUBLIC_KEY_HEX=${{ secrets.PUBLIC_KEY_HEX }}" --name firmware-container si-moko
 
       - name: Copy firmware from container
-        run: docker cp firmware-container:/spaceinvader/firmware.bin $GITHUB_WORKSPACE/firmware.bin
+        run: docker cp firmware-container:/spaceinvader/dist/firmware.bin $GITHUB_WORKSPACE/firmware.bin
 
       - name: Create Release
         id: create_release
