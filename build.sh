@@ -1,7 +1,11 @@
 #!/bin/sh
 
+# Exit on error
+set -e
+
 # Set working directory
 WORKSPACE=/spaceinvader
+cd $WORKSPACE
 
 # Initialize and update git submodules
 git submodule init
