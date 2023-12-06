@@ -54,5 +54,5 @@ dkms.conf
 apps/firmware/build/_build/
 .DS_Store
 apps/firmware/dfu_images/private.key
-apps/firmware/dfu_images/public_key.c
+# apps/firmware/dfu_images/public_key.c
 _build/

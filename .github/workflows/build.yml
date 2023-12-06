@@ -1,0 +1,42 @@
+name: Build and Release
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Docker build
+        run: docker build --platform linux/amd64 --tag si-moko .
+
+      - name: Docker run
+        run: docker run --platform linux/amd64 --env "PUBLIC_KEY_HEX=${{ secrets.PUBLIC_KEY_HEX }}" --name firmware-container si-moko
+
+      - name: Copy firmware from container
+        run: docker cp firmware-container:/spaceinvader/firmware.bin $GITHUB_WORKSPACE/firmware.bin
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: $GITHUB_WORKSPACE/firmware.bin
+          asset_name: firmware.bin
+          asset_content_type: application/octet-stream
