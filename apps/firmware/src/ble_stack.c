@@ -21,13 +21,6 @@
 #include "nrf_bootloader_info.h"
 #include "ble_conn_state.h"
 
-#ifndef uint8_t
-    typedef __uint8_t uint8_t;
-    typedef __uint16_t uint16_t;
-    typedef __uint32_t uint32_t;
-    typedef __uint64_t uint64_t;
-#endif
-
 #define APP_BLE_OBSERVER_PRIO           3                                           /**< Application's BLE observer priority. You shouldn't need to modify this value. */
 #define APP_BLE_CONN_CFG_TAG            1
 #define CFG_BLE_TX_POWER_LEVEL          4

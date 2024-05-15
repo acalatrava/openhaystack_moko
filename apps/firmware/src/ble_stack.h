@@ -3,13 +3,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#ifndef uint8_t
-    typedef __uint8_t uint8_t;
-    typedef __uint16_t uint16_t;
-    typedef __uint32_t uint32_t;
-    typedef __uint64_t uint64_t;
-#endif
-
 /*  
  *  init_ble will initialize the ble stack, it will use the crystal definition based on NRF_CLOCK_LFCLKSRC. 
  *  In devices with no external crystal you should use the internal rc. You can look at the e104bt5032a_board.h file

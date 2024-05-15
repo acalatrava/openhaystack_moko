@@ -3,29 +3,31 @@ This is an internal project developed by Antonio Calatrava for SpaceInvader Euro
 
 In November 2023, SpaceInvader Europe Aps open sourced the project under the MIT license so others may benefit and contribute further.
 
-Currently this firmware is compatible with the following models:
-Moko M1-PNDA
-Moko M2-PNDA-HA
+In April 2024, [University of Zurich](https://www.uzh.ch/en.html) requested me to make it compatible with the [C2 beacon from KKM](https://www.kkmcn.com/thin-beacon-tag-c2) which is based on nRF52805 chip
 
-This firmware support DFU updating, this way you can generate tags and deploy them over the air.
+This branch has been tested with such beacon with successful results.
 
-## Setting up
+## Key Features
+- **Energy Efficiency**: The firmware is optimized for extended battery life. Devices are set to enter a deep sleep state immediately upon activation and will only start advertising when the button is pressed.
+- **User Interaction**: Integrated support for a button and LED allows for manual control to turn the device on or off when not configured.
+- **Device Updates**: Supports Device Firmware Update (DFU). New firmware versions can be generated with a specific public key and flashed via DFU to reconfigure the device.
 
-### Get submodules
-```
-git submodule init
-git submodule update
-```
+## Configuration
+To update or configure the firmware:
+1. Generate the firmware with the required public key.
+2. Use the DFU process to flash this firmware onto the device.
 
-### Install required dependencies
- - nRF command line tools
- `brew tap homebrew/cask-drivers; brew install --cask nordic-nrf-command-line-tools`
+### Note
+This firmware is specifically designed for a device with a permanently soldered battery to maximize the battery's lifespan and reliability.
 
- - binutils
- `brew install binutils`
-
- - gcc-arm-none-eabi
- `brew install --cask gcc-arm-embedded`
 
 ### Compile the firmware
-Follow instructions on the `apps` folder
+
+Follow instructions in the `apps/firmware` folders.
+
+### Compile via Docker
+
+I added the nice Docker build from the forked https://github.com/SpaceInvaderTech/openhaystack_moko repository
+
+    docker build --platform linux/amd64 --tag open-tag .
+    docker run --rm --platform linux/amd64 --env "PUBLIC_KEY_HEX=0x00" open-tag

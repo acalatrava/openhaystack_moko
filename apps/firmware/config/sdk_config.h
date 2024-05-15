@@ -922,6 +922,9 @@
 #endif
 
 // </e>
+#ifndef PPI_ENABLED
+#define PPI_ENABLED 0
+#endif
 
 // <e> APP_TIMER_ENABLED - app_timer - Application timer functionality
 //==========================================================
@@ -1424,7 +1427,7 @@
  
 
 #ifndef NRF_FPRINTF_FLAG_AUTOMATIC_CR_ON_LF_ENABLED
-#define NRF_FPRINTF_FLAG_AUTOMATIC_CR_ON_LF_ENABLED 1
+#define NRF_FPRINTF_FLAG_AUTOMATIC_CR_ON_LF_ENABLED 0
 #endif
 
 // <q> NRF_FPRINTF_DOUBLE_ENABLED  - Enable IEEE-754 double precision formatting.
@@ -1441,12 +1444,14 @@
 //==========================================================
 
 // <h> nRF_Log 
-
+#ifndef NRF_LOG_BACKEND_SERIAL_USES_RTT
+#define NRF_LOG_BACKEND_SERIAL_USES_RTT 1
+#endif
 //==========================================================
 // <e> NRF_LOG_BACKEND_RTT_ENABLED - nrf_log_backend_rtt - Log RTT backend
 //==========================================================
 #ifndef NRF_LOG_BACKEND_RTT_ENABLED
-#define NRF_LOG_BACKEND_RTT_ENABLED 0
+#define NRF_LOG_BACKEND_RTT_ENABLED 1
 #endif
 // <o> NRF_LOG_BACKEND_RTT_TEMP_BUFFER_SIZE - Size of buffer for partially processed strings. 
 // <i> Size of the buffer is a trade-off between RAM usage and processing.
@@ -2244,6 +2249,10 @@
 #endif
 
 // </e>
+
+#ifndef NRFX_PPI_ENABLED
+#define NRFX_PPI_ENABLED 0
+#endif
 
 // <e> PPI_CONFIG_LOG_ENABLED - Enables logging in the module.
 //==========================================================
