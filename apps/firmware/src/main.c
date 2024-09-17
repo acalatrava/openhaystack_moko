@@ -33,20 +33,24 @@
 #include "SEGGER_RTT.h"
 
 // Application-specific configuration
-#define BUTTON_PIN 5
-#define LED_PIN 4
+// #define BUTTON_PIN 5
+#define LED_PIN 3
 #define LONG_PRESS_TIME APP_TIMER_TICKS(2000)      // 2 seconds
-#define ADVERTISING_INTERVAL 3000                  // milliseconds
+#define ADVERTISING_INTERVAL 10000                 // in milliseconds (10 seconds)
 #define CONFIG_MODE_TIMEOUT APP_TIMER_TICKS(60000) // 60 seconds
 
 // Timers declaration
 APP_TIMER_DEF(config_timer_id);
+#ifdef BUTTON_PIN
 APP_TIMER_DEF(button_timer_id);
+#endif
 
 // Device status flags
+#ifdef BUTTON_PIN
 static bool button_down = false;
-static bool app_running = false;
 static bool restart_on_release = false;
+#endif
+static bool app_running = false;
 
 // Default public key
 static char public_key[28] = "OFFLINEFINDINGPUBLICKEYHERE!";
@@ -60,10 +64,13 @@ static char public_key[28] = "OFFLINEFINDINGPUBLICKEYHERE!";
         SEGGER_RTT_WriteString(0, _buf);                          \
     } while (0)
 
+#ifdef LED_PIN
 // Forward declarations
 void led_turn_on(void);
 void led_turn_off(void);
+#endif
 
+#ifdef BUTTON_PIN
 /**
  * @brief Functions for handling the button press.
  */
@@ -146,7 +153,9 @@ void button_init(void)
 
     log("Button initialized");
 }
+#endif
 
+#ifdef LED_PIN
 /**
  * @brief Functions for handling the LED.
  */
@@ -179,6 +188,7 @@ void led_init(void)
     log("LED initialized");
     nrf_gpio_cfg_output(LED_PIN);
 }
+#endif
 
 /**
  * @brief Functions for handling the timers.
@@ -213,13 +223,24 @@ static void log_init(void)
     NRF_LOG_DEFAULT_BACKENDS_INIT();
 }
 
+// Returns true if the device is programmed (public key is set)
+static bool is_programmed(void)
+{
+    return memcmp(public_key, "OFFLINE", 7) != 0;
+}
+
 int main(void)
 {
     log_init();
     log("Main start");
 
+#ifdef LED_PIN
     led_init();
+#endif
+
+#ifdef BUTTON_PIN
     button_init();
+#endif
 
     ret_code_t err_code = ble_dfu_buttonless_async_svci_init();
     APP_ERROR_CHECK(err_code);
@@ -243,38 +264,54 @@ int main(void)
     gatt_init();
 
     // Set bluetooth address
-    if (memcmp(public_key, "OFFLINE", 7) != 0)
+    if (is_programmed())
         setMacAddress(ble_address);
 
     // Initialize advertising
-    advertising_init(ADVERTISING_INTERVAL);
+    if (is_programmed())
+    {
+        advertising_init(ADVERTISING_INTERVAL);
+    }
+    else
+    {
+        // When the device is not programmed, we will advertise every 2 seconds to facilitate pairing
+        advertising_init(2000);
+    }
 
     // Initialize services
     services_init();
     conn_params_init();
 
-    if (memcmp(public_key, "OFFLINE", 7) != 0)
+    if (is_programmed())
     {
         // If device is configured (aka public key is set), we will start advertising from the start
         timers_start();
+#ifdef LED_PIN
         led_turn_on();
+#endif
         app_running = true;
     }
+#ifdef LED_PIN
     else
     {
         led_turn_off();
     }
+#endif
 
+#ifdef BUTTON_PIN
     while (1)
     {
         if (app_running)
         {
+#endif
             startAdvertisement();
             while (1)
             {
                 power_manage();
             }
+#ifdef BUTTON_PIN
         }
         power_manage();
     }
+#endif
 }
