@@ -32,9 +32,15 @@
 #include "nrf_gpiote.h"
 #include "SEGGER_RTT.h"
 
-// Application-specific configuration
-// #define BUTTON_PIN 5
+// Hardware features
+
+// Uncomment to use the button for H1 and H2
+// #define BUTTON_PIN 29
+
+// Uncomment to use the LED on M1, H1 and H2
 #define LED_PIN 3
+
+// Application-specific configuration
 #define LONG_PRESS_TIME APP_TIMER_TICKS(2000)      // 2 seconds
 #define ADVERTISING_INTERVAL 10000                 // in milliseconds (10 seconds)
 #define CONFIG_MODE_TIMEOUT APP_TIMER_TICKS(60000) // 60 seconds
