@@ -390,6 +390,9 @@ void setAdvertisementData(uint8_t *data, uint8_t dlen) {
 void startAdvertisement(int interval) {
     ret_code_t err_code;
 
+    err_code = sd_ble_gap_tx_power_set(BLE_GAP_TX_POWER_ROLE_ADV, m_advertising.adv_handle, CFG_BLE_TX_POWER_LEVEL);
+    APP_ERROR_CHECK(err_code);
+
     err_code = ble_advertising_start(&m_advertising, BLE_ADV_MODE_FAST);
     APP_ERROR_CHECK(err_code);
 }
