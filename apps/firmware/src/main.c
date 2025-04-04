@@ -36,7 +36,7 @@
 #define BUTTON_PIN 5
 #define LED_PIN 4
 #define LONG_PRESS_TIME APP_TIMER_TICKS(2000)      // 2 seconds
-#define ADVERTISING_INTERVAL 3000                  // milliseconds
+#define DEFAULT_ADVERTISING_INTERVAL 3000          // milliseconds
 #define CONFIG_MODE_TIMEOUT APP_TIMER_TICKS(60000) // 60 seconds
 
 // Timers declaration
@@ -50,6 +50,10 @@ static bool restart_on_release = false;
 
 // Default public key
 static char public_key[28] = "OFFLINEFINDINGPUBLICKEYHERE!";
+
+// Selector for advertising interval (e.g., "INT1" = 1s, "INT2" = 2s, "INT3" = 3s, "INT4" = 5s, "INT5" = 10s)
+// Easily modifiable in the final binary. Defaulting to "INT3".
+static char advertising_interval_selector[5] = "INTX";
 
 // Custom logger function
 #define log(format, ...)                                          \
@@ -213,6 +217,11 @@ static void log_init(void)
     NRF_LOG_DEFAULT_BACKENDS_INIT();
 }
 
+// Predefined advertising intervals and their selectors
+const uint16_t preset_intervals[] = {1000, 2000, 3000, 5000, 10000};
+const char *interval_selectors[] = {"INT1", "INT2", "INT3", "INT4", "INT5"};
+const int num_intervals = sizeof(preset_intervals) / sizeof(preset_intervals[0]);
+
 int main(void)
 {
     log_init();
@@ -246,8 +255,30 @@ int main(void)
     if (memcmp(public_key, "OFFLINE", 7) != 0)
         setMacAddress(ble_address);
 
-    // Initialize advertising
-    advertising_init(ADVERTISING_INTERVAL);
+    // Determine advertising interval based on selector
+    uint16_t selected_advertising_interval = DEFAULT_ADVERTISING_INTERVAL;
+    bool interval_found = false;
+    for (int i = 0; i < num_intervals; ++i)
+    {
+        // Compare selector string for an exact match
+        if (strcmp(advertising_interval_selector, interval_selectors[i]) == 0)
+        {
+            selected_advertising_interval = preset_intervals[i];
+            log("Selected advertising interval: %u ms based on selector '%s'", selected_advertising_interval, interval_selectors[i]);
+            interval_found = true;
+            break;
+        }
+    }
+    if (!interval_found)
+    {
+        log("Advertising interval selector '%.*s' not found or invalid. Using default: %u ms",
+            (int)sizeof(advertising_interval_selector) - 1,
+            advertising_interval_selector,
+            selected_advertising_interval);
+    }
+
+    // Initialize advertising with the selected interval
+    advertising_init(selected_advertising_interval);
 
     // Initialize services
     services_init();

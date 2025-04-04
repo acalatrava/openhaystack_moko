@@ -171,6 +171,8 @@ CFLAGS += -fno-builtin -fshort-enums
 # dfu
 CFLAGS += -DNRF_DFU_TRANSPORT_BLE=1
 CFLAGS += -DBL_SETTINGS_ACCESS_ONLY
+# prevent warning-error
+CFLAGS += -Wno-error=array-bounds
 
 # C++ flags common to all targets
 CXXFLAGS += $(OPT)
