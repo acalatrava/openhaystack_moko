@@ -246,13 +246,16 @@ int main(void)
     // Initialize BLE
     init_ble();
 
+    // Check if it is configured
+    bool is_configured = memcmp(public_key, "OFFLINE", 7) != 0;
+
     // DFU service
     peer_manager_init();
-    gap_params_init();
+    gap_params_init(is_configured);
     gatt_init();
 
     // Set bluetooth address
-    if (memcmp(public_key, "OFFLINE", 7) != 0)
+    if (is_configured)
         setMacAddress(ble_address);
 
     // Determine advertising interval based on selector

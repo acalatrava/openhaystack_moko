@@ -49,7 +49,7 @@ void power_manage(void);
  * DFU required functions
 */
 void peer_manager_init();
-void gap_params_init(void);
+void gap_params_init(bool is_configured);
 void gatt_init(void);
 void services_init(void);
 void conn_params_init(void);
